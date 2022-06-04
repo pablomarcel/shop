@@ -1,109 +1,121 @@
-import React, {Component} from "react";
-import {connect} from "react-redux";
-import {Route, Routes, Navigate} from "react-router-dom";
-// import Header from './components/Header'
+import React, { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import {Routes, Route, Navigate} from 'react-router-dom';
+import { checkUserSession } from './redux/User/user.actions';
 
-import {auth, handleUserProfile} from "./firebase/utils";
-import {setCurrentUser} from "./redux/User/user.actions";
+// components
+import AdminToolbar from './components/AdminToolbar';
 
-//layouts
-import MainLayout from "./layouts/MainLayout";
-import HomepageLayout from "./layouts/HomepageLayout";
-import Login from "./pages/Login";
+// hoc
+import WithAuth from './hoc/withAuth';
+import WithAdminAuth from './hoc/withAdminAuth';
 
-//pages
-import Homepage from "./pages/Homepage";
-import Registration from "./pages/Registration";
-import './default.scss'
-import {mapDispatchToPropsFactory} from "react-redux/es/connect/mapDispatchToProps";
+// layouts
+import MainLayout from './layouts/MainLayout';
+import HomepageLayout from './layouts/HomepageLayout';
+import AdminLayout from './layouts/AdminLayout';
+import DashboardLayout from './layouts/DashboardLayout';
 
-// const initialState={
-//     currentUser: null
-// }
+// pages
+import Homepage from './pages/Homepage';
+//import Search from './pages/Search';
+import Registration from './pages/Registration';
+import Login from './pages/Login';
+//import Recovery from './pages/Recovery';
+import Dashboard from './pages/Dashboard';
+import Admin from './pages/Admin';
+import ProductDetails from './pages/ProductDetails';
+import Cart from './pages/Cart';
+import Payment from './pages/Payment';
+import Order from './pages/Order';
+import './default.scss';
 
-class App extends Component{
+const App = props => {
+    const dispatch = useDispatch();
 
-    // constructor(props) {
-    //     super(props);
-    //     this.state={
-    //         ...initialState
-    //     }
-    // }
+    useEffect(() => {
+        dispatch(checkUserSession());
 
-    authListener = null
+    }, []);
 
-
-    componentDidMount(){
-
-        const {setCurrentUser}=this.props
-
-        this.authListener=auth.onAuthStateChanged(async userAuth =>{
-            if(userAuth){
-                const userRef= await handleUserProfile(userAuth);
-                userRef.onSnapshot(snapshot =>{
-                    setCurrentUser({
-                        id: snapshot.id,
-                        ...snapshot.data()
-                        }
-
-
-                    )
-                })
-
-            }
-
-            setCurrentUser(userAuth)
-
-            // this.setState({
-            //     ...initialState
-            // })
-        })
-
-    }
-
-    componentWillUnmount() {
-        this.authListener();
-
-
-    }
-
-    render(){
-
-        const {currentUser} =this.props
-
-        return (
-            <div className="App">
-
-                <Routes>
-                    <Route exact path="/" element={
-                        <HomepageLayout>
-                            <Homepage/>
-                        </HomepageLayout>}/>
-                    <Route path="/registration" element={
+    return (
+        <div className="App">
+            <AdminToolbar />
+            <Routes>
+                <Route exact path="/" element={
+                    <HomepageLayout>
+                        <Homepage />
+                    </HomepageLayout>
+                }
+                />
+                {/*<Route exact path="/search" element={*/}
+                {/*    <MainLayout>*/}
+                {/*        <Search />*/}
+                {/*    </MainLayout>*/}
+                {/*} />*/}
+                {/*<Route path="/search/:filterType" element={*/}
+                {/*    <MainLayout>*/}
+                {/*        <Search />*/}
+                {/*    </MainLayout>*/}
+                {/*} />*/}
+                <Route path="/product/:productID" element={
+                    <MainLayout>
+                        <ProductDetails />
+                    </MainLayout>
+                } />
+                <Route path="/cart" element={
+                    <MainLayout>
+                        <Cart />
+                    </MainLayout>
+                } />
+                <Route path="/payment" element={
+                    <WithAuth>
                         <MainLayout>
-                            <Registration />
-                        </MainLayout>} />
-                    {/*<Route path="/login" element={<MainLayout currentUser={currentUser}><Login /></MainLayout>} />*/}
+                            <Payment />
+                        </MainLayout>
+                    </WithAuth>
+                } />
+                <Route path="/registration" element={
+                    <MainLayout>
+                        <Registration />
+                    </MainLayout>
+                } />
+                <Route path="/login"
+                       element={
+                           <MainLayout>
+                               <Login />
+                           </MainLayout>
+                       } />
+                {/*<Route path="/recovery" element={*/}
+                {/*    <MainLayout>*/}
+                {/*        <Recovery />*/}
+                {/*    </MainLayout>*/}
+                {/*} />*/}
+                <Route path="/dashboard" element={
+                    <WithAuth>
+                        <DashboardLayout>
+                            <Dashboard />
+                        </DashboardLayout>
+                    </WithAuth>
+                } />
+                <Route path="/order/:orderID" element={
+                    <WithAuth>
+                        <DashboardLayout>
+                            <Order />
+                        </DashboardLayout>
+                    </WithAuth>
+                } />
+                <Route path="/admin" element={
+                    <WithAdminAuth>
+                        <AdminLayout>
+                            <Admin />
+                        </AdminLayout>
+                    </WithAdminAuth>
+                } />
+            </Routes>
+        </div>
 
-                    <Route path="/login"
-                           element={
-                        currentUser ? <Navigate to="/"/> :
-                            <MainLayout><Login /></MainLayout>} />
-
-                </Routes>
-            </div>
-        );
-    }
-
-
+    );
 }
 
-const mapStateToProps= ({user})=>({
-    currentUser:user.currentUser
-})
-
-const mapDispatchToProps=dispatch=>({
-    setCurrentUser:user=>dispatch(setCurrentUser(user))
-})
-
-export default connect(mapStateToProps, mapDispatchToProps)(App);
+export default App;
